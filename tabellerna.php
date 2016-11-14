@@ -12,7 +12,10 @@ class tabeller{
 		echo "\nMultiplication table trainer";
 		echo "\n learns hard tables";
 		echo "\n-------------------------------";
-		echo "\n";
+		echo "\n All questions have delay timer for report afterwards";
+		echo "\n todo: delay time < 3 seconds or fail";
+		echo "\n todo: save reports( delays and hard factors) to sqlite";
+		echo "\n ";
 		echo "\n 1) Multiplication  test with AI";
 		echo "\n 2) Multiplication  test\n";
 
@@ -34,16 +37,10 @@ class tabeller{
 		echo "\nMultiplication AI mode";
 		echo "\n Test ends when quote < 5";
 		echo "\n Else progresses for ever ";
-		echo "\n All questions have delay timer for report afterwards";
-		echo "\n todo delay time max 3 seconds to progress";
-		echo "\n else levels down";
 
 		#todo ad AI factor progression (never ending iterations?)
 
-		#For progression
-		#$maxfactor = 2; #
 		
-		#Level +- 1 is for training round a level
 		$level = 2; # Max factor is level
 		$level_diff = 2; #scatter +- 2  not used yet
 		$level_quota = 0; # +- correctness frequency ++ for right -- for fail
@@ -55,7 +52,7 @@ class tabeller{
 
 		$timer = array_sum(explode(' ', microtime())); #timer
 		
-		$num_questions = 10;
+		
 		$right = 0;
 		$wrong = 0;
 		$hardfactors = array();
@@ -72,7 +69,6 @@ class tabeller{
 			}
 
 			if($level_quota <= -2){
-				#echo "LOW quite!";
 				$level--;
 				$level_quota = 0; # reset
 			}
@@ -98,34 +94,30 @@ class tabeller{
 			}
 			echo "\n$a x $b = ";
 			$input = trim(self::input());
-			#echo "\n du sa ".$input;
 
 			if( $input == $svar){
+
 				# CORRECT ANSWER
 				$level_quota++;
 				$right++;
 				$results[$i]['result'] = 'Correct';
 			}else{
+
+				echo " Fail.. ($svar)";
 				$level_quota--;
 				$wrong++;
-				echo " Fail.. ($svar)";
 				$results[$i]['result'] = 'Fail';
 				$hardfactors[]=$a;
 				$hardfactors[]=$b;
-				$num_questions = $num_questions + 2; #add another question to the loop
-
 			}
 
-			#dont allow test to end if factors are left
-			if( count($hardfactors) > 0) {
-				$num_questions++;
-			}
-			
 			$results[$i]['question'] = "$a x $b = $svar ($input)";
 			$results[$i]['delay'] = 100*round(  array_sum(explode(' ', microtime())) - $timer_q ,2); #ms (millseconds)
 
 			unset($input);
-		}
+		
+		}# End of test looping
+
 
 		$results['testreport']['total_time_ms'] = 100*round(  array_sum(explode(' ', microtime())) - $timer ,2); #ms (millseconds)
 		$results['testreport']['correct'] = $right;
@@ -133,7 +125,7 @@ class tabeller{
 		$results['testreport']['correct_procent'] = round(100*($right/$num_questions));
 
 		echo "\n\n---------------------------";
-		echo "\n\n[$right/$num_questions] correct";
+		echo "\n\n[$right/$i] correct";
 		echo "\n\n---------------------------";
 
 		return $results;
@@ -143,8 +135,8 @@ class tabeller{
 
 	public function report($results){
 		#todo
-		#support results in json / serialized /  string  to support old saved resulats form db/file
-		#
+		#support results in json / serialized /  string  to support old saved resulats from db/file
+		
 		echo "\nReport";
 		if (is_array($results)){
 			foreach ($results as $k => $v) {
@@ -163,9 +155,7 @@ class tabeller{
 		$handle = fopen ("php://stdin","r");
 		$input = fgets($handle);
 		fclose($handle);
-		return $input;
-		// $x  = stripcslashes(trim($input));
-		// return  str_replace(array("\n", "\r"), '', $x);
+		return trim($input);
 	}
 
 
@@ -174,7 +164,7 @@ class tabeller{
 
 
 	function run_multi(){
-		echo "\nMultiplication fixed num questiions\n";
+		echo "\nMultiplication test.  A fail ads a new questions\n";
 		$timer = array_sum(explode(' ', microtime())); #timer
 		
 		$num_questions = 4;
@@ -189,15 +179,16 @@ class tabeller{
 			$b = rand(2,9);
 			$svar = $a*$b;
 
+			echo "\nQuestion[$i/$num_questions]";
 			echo "\n$a x $b = ";
 			$input = trim(self::input());
-			#echo "\n du sa ".$input;
 
 			if( $input == $svar){
-				#echo " yes!";
+
 				$right++;
 				$results[$i]['result'] = 'Correct';
 			}else{
+				$num_questions++;
 				$wrong++;
 				echo " Fail.. ($svar)";
 				$results[$i]['result'] = 'Fail';
